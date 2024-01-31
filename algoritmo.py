@@ -1,7 +1,8 @@
 import random
 from math import inf
 import time
-
+import matplotlib.pyplot as plt
+import numpy as np
 
 # Cria as variáveis do problema
 #rest1
@@ -61,39 +62,41 @@ def inicializarGeracao(populacao_existente):
     return populacao
 
 def preencherCromossomo():
-   cromossomo = []
-   TAMANHO_CROMOSSOMO = 22
-   i = 0
-   while i < TAMANHO_CROMOSSOMO:
-    #fazer com 0 e 1
-        if i < 4:
-            n = 2
-        elif i < 8:
-            n = 4
-        else:
-            n = 64
+    lista_de_valor = [6, 9, 13, 22, 6, 7, 3, 6, 2, 3, 3, 2, 2, 24, 10, 3, 2, 4, 5, 5, 6, 10]
+    cromossomo = []
+    TAMANHO_CROMOSSOMO = 22
+    bool_binario = 0
+    i = 0
+    while i < TAMANHO_CROMOSSOMO:
+        n = lista_de_valor[i] * 5
         cromossomo.append(random.randrange(0, n))
         i += 1
-
-   return cromossomo
+    while calcularPeso(cromossomo) > PESO_MAXIMO:
+        cromossomo = []
+        i = 0
+        while i < TAMANHO_CROMOSSOMO:
+            n = lista_de_valor[i] * 5
+            cromossomo.append(random.randrange(0, n))
+            i += 1
+    if calcularPeso(cromossomo) <= PESO_MAXIMO:
+        bool_binario = 1
+        #print("Wow esse cromossomo não é pesado")
+        #print("Peso ", calcularPeso(cromossomo))
+        return cromossomo
+    #print("O quão pesado é pra não tá gerando?? ", calcularPeso(cromossomo))
 
 def avaliarPopulacao(populacao):
     #avalairPopulacao(populacao, Vp)
     resultados = []
-    Ei = []
-    Ed = []
-    L = []
-    Ef = []
-    x = []
-    rest1 = []
-    rest2 = []
-    var = []
     i = 0;
+    valor = 0;
     for individuo in populacao:
         peso = calcularPeso(individuo[1])
         #Adicionar valor à fórmula do fitness
-        if peso <= PESO_MAXIMO:
-            fitness = PESO_MAXIMO - peso
+        if peso > PESO_MAXIMO:
+            fitness = 0
+        elif peso > 0:
+            fitness = calcularLucro(individuo[1])
             resultados.append((individuo[0], individuo[1], fitness))
         i += 1;
     return resultados
@@ -102,7 +105,7 @@ def calcularPeso(cromossomo):
     peso = 0
     lista_de_pesos = [47, 47, 47, 47, 47, 47, 47, 23, 11, 11, 11, 5, 5, 47, 47, 5, 5, 23, 23, 23, 5, 23]
     for i,j in zip(cromossomo, lista_de_pesos):
-        peso += i*j;
+        peso += i*j
     return peso
 
 def selecionarMenoresFitness(populacao, tamanho):
@@ -130,7 +133,7 @@ def selecionarMaioresFitness(populacao, tamanho):
 
 def gerarFilhos(populacao):
     filhos = []
-    tamanho = TAX_CROSSOVER
+    tamanho = TAX_CROSSOVER ##testar com porcentagem da população no lugar de "0.3"
     while tamanho > 0 and len(populacao) >= 2:
         pai = populacao.pop(random.choice(range(len(populacao))))
         mae = populacao.pop(random.choice(range(len(populacao))))
@@ -157,19 +160,14 @@ def melhorResultado(populacao):
     global melhor_resultado
     global melhor_fitness
     try:
-        if populacao[0][2] < melhor_fitness:
-            print("Posicao do resultado")
-            print(populacao[0])
-            print("Fitness desse resultado")
-            print(populacao[0][2])
+        if populacao[0][2] >= melhor_fitness:
             melhor_fitness = populacao[0][2]
             melhor_resultado = populacao[0]
     except IndexError:
         print("Fora do range")
 
 def calcularLucro(cromossomo):
-    lista_de_valor = [6, 9, 13, 22, 6, 7, 3, 6, 2, 3, 3, 2, 2, 24, 10, 3, 2, 4, 5, 5, 6, 10];
-    tamanho = 22
+    lista_de_valor = [6, 9, 13, 22, 6, 7, 3, 6, 2, 3, 3, 2, 2, 24, 10, 3, 2, 4, 5, 5, 6, 10]
     valor = 0
     for i,j in zip(cromossomo, lista_de_valor):
         valor += i*j
@@ -191,17 +189,19 @@ def maiorLucro(populacao):
         print("Fora do range")
 
 def mutar(populacao):
+   lista_de_valor = [6, 9, 13, 22, 6, 7, 3, 6, 2, 3, 3, 2, 2, 24, 10, 3, 2, 4, 5, 5, 6, 10]
    for individuo in populacao:
        cromossomo = individuo[1]
        for i in range(len(cromossomo)):
            for j in range(4):
-               if random.random() < TAXA_DE_MUTACAO:
-                if i < 4:
-                    cromossomo[i] = random.randrange(0, 2)
-                elif i < 8:
-                    cromossomo[i] = random.randrange(0, 4)
-                else:
-                    cromossomo[i] = random.randrange(0, 64)
+               if random.random() < TAXA_DE_MUTACAO: #tentar fazer esse com o porcentual da população
+                cromossomo[i] = random.randrange(0, lista_de_valor[i]*5)
+                #if i < 4:
+                #    cromossomo[i] = random.randrange(0, 2)
+                #elif i < 8:
+                #    cromossomo[i] = random.randrange(0, 4)
+                #else:
+                #    cromossomo[i] = random.randrange(0, 64)
 
    return avaliarPopulacao(populacao)
 
@@ -209,20 +209,20 @@ lista_de_valor = [6, 9, 13, 22, 6, 7, 3, 6, 2, 3, 3, 2, 2, 24, 10, 3, 2, 4, 5, 5
 lista_de_quantidade_produtos = [37674, 16872, 18702, 9186, 12474, 37980, 9180, 4716, 42120, 97380, 30876, 21732, 4620, 38586, 11406, 4884, 6756, 2592, 6660, 11784, 17652, 1800]
 lista_de_quantidade_plastico_por_garrafa = [47, 47, 47, 47, 47, 47, 47, 23, 11, 11, 11, 5, 5, 47, 47, 5, 5, 23, 23, 23, 5, 23]
 tempo_o = time.time()
-TAXA_DE_MUTACAO = 0.2
-TAM_POPULACAO = 800
-TAX_CROSSOVER = 0.3
+TAXA_DE_MUTACAO = 0.5
+TAM_POPULACAO = 1500
+TAX_CROSSOVER = 0.5
 TAM_ELITE = 10%TAM_POPULACAO
 TAM_MUTACAO = 5%TAM_POPULACAO
 
-#PESO_MAXIMO ANTERIORMENTE CALCULADO 189000000
+#PESO_MAXIMO ANTERIORMENTE CALCULADO 189000000 12720
 
-PESO_MAXIMO = 38720
+PESO_MAXIMO = 14000
 POSICAO_INDEX = 0
 POSICAO_CROMOSSOMO = 1
 POSICAO_FITNESS = 2
 #num q a gente tava usando antes: 500
-NUM_GERACOES = 10
+NUM_GERACOES = 20
 geracao = 0
 max_index = 0
 nova_geracao = []
@@ -234,8 +234,13 @@ posicao_lucro = None
 melhor_lucro = 0
 cromossomo_lucro = None
 fitness_lucro = None
-melhor_fitness = inf
+melhor_fitness = 0
 populacao = gerarPopulacaoInicial(TAM_POPULACAO)
+#pro grafico
+par = []
+x_values = []
+y_values = []
+print("Execução | Nº Gerações | Tamanho População | Taxa de Cruzamento | Taxa de Mutação | Melhor Fitness | Peso Fitness")
 while geracao < NUM_GERACOES:
     #faz o cruzamento, a mutação e depois o fitness
     populacao = sorted(populacao, key=lambda x: x[POSICAO_FITNESS], reverse=True)
@@ -253,16 +258,38 @@ while geracao < NUM_GERACOES:
     #lucro
     maiorLucro(nova_geracao)
     populacao = nova_geracao
+    par.append((nova_geracao[0], nova_geracao[2]))
+    x_values.append(nova_geracao[0])
+    y_values.append(nova_geracao[2])
     geracao += 1
+    for i in nova_geracao:
+        print(i)
+    print("1", geracao, TAM_POPULACAO, TAX_CROSSOVER, TAXA_DE_MUTACAO, melhor_resultado[2], calcularPeso(melhor_resultado[1]))
+plt.figure(figsize=(8, 6))
+
 print("Melhor resultado global:")
 print(melhor_resultado)
 print("Lucro do melhor resultado global:")
 print(calcularLucro(melhor_resultado[1]))
+print("Peso do melhor resultado global:")
+print(calcularPeso(melhor_resultado[1]))
 #ele tá pegando o menor dos maiores valores (seleção por rankeamento)
 print("Melhor lucro global:")
 print(posicao_lucro, cromossomo_lucro, fitness_lucro, melhor_lucro)
+print("Peso do melhor lucro global:")
+print(posicao_lucro, calcularPeso(cromossomo_lucro))
 print("Resultado iteração final:")
 print(nova_geracao[0])
 print("Lucro do resultado final:")
 print("dps eu faço hehe")
 print("Tempo de execução: {:.1f}".format(time.time()-tempo_o))
+
+pairs = [{'x': 1, 'y': 12443}, {'x': 2, 'y': 10879}, {'x': 3, 'y': 8373}, {'x': 4, 'y': 12257}, {'x': 5, 'y': 12135}, {'x': 6, 'y': 16923}, {'x': 7, 'y': 11338}, {'x': 8, 'y': 11603}, {'x': 9, 'y': 12572}, {'x': 10, 'y': 18798}]
+
+x_values = [pair['x'] for pair in pairs]
+y_values = [pair['y'] for pair in pairs]
+
+plt.plot(x_values, y_values)
+plt.xlabel('Número execução')
+plt.ylabel('Valores Fitness')
+plt.show()
